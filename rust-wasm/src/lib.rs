@@ -27,3 +27,18 @@ pub fn matmul_sum(n: u32) -> f64 {
 
     sum % MOD
 }
+
+#[wasm_bindgen]
+pub fn factorial_mod(n: u32) -> u32 {
+    const MOD: u64 = 1_000_000_007;
+    let mut res: u64 = 1;
+    let mut i: u64 = 1;
+    let limit = n as u64;
+
+    while i <= limit {
+        res = (res * i) % MOD;
+        i += 1;
+    }
+
+    res as u32
+}
