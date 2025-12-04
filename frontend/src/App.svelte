@@ -1,4 +1,5 @@
 <script lang="ts">
+  import DemoFactorialTab from './lib/components/DemoFactorialTab.svelte';
   import DemoMatrixTab from './lib/components/DemoMatrixTab.svelte';
 
   type TabId = 'js-strong' | 'wasm-strong' | 'image';
@@ -40,10 +41,7 @@
     {#if activeTab === 'js-strong'}
       <DemoMatrixTab />
     {:else if activeTab === 'wasm-strong'}
-      <div class="text-sm text-slate-300">
-        <p class="mb-2">Tab 2 – WASM wins demo (coming soon).</p>
-        <p>Here we&apos;ll plug in the factorial mod prime benchmark where Rust + WASM crushes JS BigInt.</p>
-      </div>
+      <DemoFactorialTab />
     {:else}
       <div class="text-sm text-slate-300">
         <p class="mb-2">Tab 3 – image processing demo (coming soon).</p>
