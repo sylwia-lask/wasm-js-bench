@@ -1,0 +1,15 @@
+{
+  "name": "wasm_js_bench",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "wasm_js_bench_bg.wasm",
+    "wasm_js_bench.js",
+    "wasm_js_bench.d.ts"
+  ],
+  "main": "wasm_js_bench.js",
+  "types": "wasm_js_bench.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
