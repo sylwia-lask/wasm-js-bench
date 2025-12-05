@@ -160,7 +160,11 @@ function waveJs(
   const frequency = (2 * Math.PI) / 80;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const offset = Math.round(amplitude * Math.sin(y * frequency));
+      const offsetFloat = amplitude * Math.sin(y * frequency);
+      // trunc jak rzutowanie f32 -> isize w Rust
+      const offset =
+        offsetFloat < 0 ? Math.ceil(offsetFloat) : Math.floor(offsetFloat);
+
       const sx = x + offset;
       const sy = y;
       const [r, g, b, a] = getPixelJs(src, w, h, sx, sy);
@@ -179,16 +183,8 @@ function sobelEdgesJs(
   w: number,
   h: number
 ) {
-  const gx = [
-    -1, 0, 1,
-    -2, 0, 2,
-    -1, 0, 1
-  ];
-  const gy = [
-    -1, -2, -1,
-     0,  0,  0,
-     1,  2,  1
-  ];
+  const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+  const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -199,7 +195,9 @@ function sobelEdgesJs(
       for (let ky = -1; ky <= 1; ky++) {
         for (let kx = -1; kx <= 1; kx++) {
           const [r, g, b] = getPixelJs(src, w, h, x + kx, y + ky);
-          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          // jak w Rust: f32 -> i32 (trunc)
+          const lum = (0.299 * r + 0.587 * g + 0.114 * b) | 0;
+
           sx += gx[k] * lum;
           sy += gy[k] * lum;
           k++;
@@ -277,18 +275,18 @@ function nonlinearEdgesJs(
 }
 
 function pixelHashMixJs(seed: number): number {
-  const MOD = 1000000007;
-  const ROUNDS = 64;
+  const MOD = 1000000007n;
+  const ROUNDS = 64n;
 
-  let acc = (seed + 1) % MOD;
-  const s = seed % MOD;
+  let acc = (BigInt(seed) + 1n) % MOD;
+  const s = BigInt(seed) % MOD;
 
-  for (let i = 1; i <= ROUNDS; i++) {
+  for (let i = 1n; i <= ROUNDS; i++) {
     const factor = (i + s) % MOD;
-    acc = (acc * factor + i * 17) % MOD;
+    acc = (acc * factor + i * 17n) % MOD;
   }
 
-  return acc & 0xff;
+  return Number(acc & 0xffn);
 }
 
 function intensityHashPassJs(
