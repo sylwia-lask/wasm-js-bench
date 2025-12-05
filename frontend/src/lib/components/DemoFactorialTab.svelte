@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import init, { factorial_mod as factorialModWasm } from '../wasm/wasm_js_bench.js';
+  import { jsFactorialMod } from '../logic/factorialMod.js';
 
   let wasmReady = false;
 
@@ -18,19 +19,6 @@
     await init(); 
     wasmReady = true;
   });
-
-  function jsFactorialMod(n: number): number {
-    const MOD = 1_000_000_007n;
-
-    let res = 1n;
-    const bigN = BigInt(n);
-
-    for (let i = 1n; i <= bigN; i++) {
-      res = (res * i) % MOD;
-    }
-
-    return Number(res);
-  }
 
   type BenchResult = { ms: number; result: number };
 

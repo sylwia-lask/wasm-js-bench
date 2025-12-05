@@ -1,5 +1,6 @@
 <script lang="ts">
   import DemoFactorialTab from './lib/components/DemoFactorialTab.svelte';
+  import DemoImageTab from './lib/components/DemoImageTab.svelte';
   import DemoMatrixTab from './lib/components/DemoMatrixTab.svelte';
 
   type TabId = 'js-strong' | 'wasm-strong' | 'image';
@@ -43,10 +44,7 @@
     {:else if activeTab === 'wasm-strong'}
       <DemoFactorialTab />
     {:else}
-      <div class="text-sm text-slate-300">
-        <p class="mb-2">Tab 3 – image processing demo (coming soon).</p>
-        <p>We&apos;ll add a real-world example: an image filter computed in Rust + WASM, rendered with Svelte.</p>
-      </div>
+      <DemoImageTab />
     {/if}
   </div>
 </main>
