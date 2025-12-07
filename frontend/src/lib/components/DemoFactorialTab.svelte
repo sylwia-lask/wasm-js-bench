@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import init, { factorial_mod as factorialModWasm } from '../wasm/wasm_js_bench.js';
   import { jsFactorialMod } from '../logic/factorialMod.js';
 
+  export const componentName = 'FactorialBenchmarkTab';
+
   let wasmReady = false;
 
-  let n: number = 500_000; 
-  let runs: number = 3;   
+  let n: number = 500_000;
+  let runs: number = 3;
 
   let jsTime: string | null = null;
   let wasmTime: string | null = null;
@@ -15,8 +17,10 @@
   let jsResult: number | null = null;
   let wasmResult: number | null = null;
 
+  let isRunning = false;
+
   onMount(async () => {
-    await init(); 
+    await init();
     wasmReady = true;
   });
 
@@ -33,6 +37,10 @@
   }
 
   async function runBenchmark() {
+    if (!wasmReady || isRunning) return;
+
+    isRunning = true;
+
     jsTime = null;
     wasmTime = null;
     speedup = null;
@@ -40,20 +48,22 @@
     jsResult = null;
     wasmResult = null;
 
-    const numericN = Number(n);
-    const numericRuns = Number(runs);
+    try {
+      const numericN = Number(n);
+      const numericRuns = Number(runs);
 
-    const js = bench(jsFactorialMod, numericN, numericRuns);
-    jsTime = js.ms.toFixed(2);
-    jsResult = js.result;
+      const js = bench(jsFactorialMod, numericN, numericRuns);
+      jsTime = js.ms.toFixed(2);
+      jsResult = js.result;
 
-    if (!wasmReady) return;
+      const wasm = bench(factorialModWasm as (arg: number) => number, numericN, numericRuns);
+      wasmTime = wasm.ms.toFixed(2);
+      wasmResult = wasm.result;
 
-    const wasm = bench(factorialModWasm as (arg: number) => number, numericN, numericRuns);
-    wasmTime = wasm.ms.toFixed(2);
-    wasmResult = wasm.result;
-
-    speedup = (js.ms / wasm.ms).toFixed(1);
+      speedup = (js.ms / wasm.ms).toFixed(1);
+    } finally {
+      isRunning = false;
+    }
   }
 </script>
 
@@ -98,12 +108,14 @@
   <button
     class="w-full py-2.5 rounded-md bg-indigo-500 hover:bg-indigo-400 text-sm font-semibold transition disabled:opacity-50"
     on:click={runBenchmark}
-    disabled={!wasmReady}
+    disabled={!wasmReady || isRunning}
   >
-    {#if wasmReady}
-      Run factorial benchmark
-    {:else}
+    {#if !wasmReady}
       Loading WASM…
+    {:else if isRunning}
+      Running factorial benchmark…
+    {:else}
+      Run factorial benchmark
     {/if}
   </button>
 

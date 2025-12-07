@@ -28,6 +28,7 @@
   });
 
   function loadSampleImage() {
+    if (running) return;
     const img = new Image();
     img.onload = () => {
       drawImageToInputCanvas(img);
@@ -37,6 +38,7 @@
   }
 
   function handleFileChange(event: Event) {
+    if (running) return;
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
     const file = target.files[0];
@@ -110,34 +112,32 @@
 
     const inputPixels = imgData.data;
 
-    // WASM
-    const t0Wasm = performance.now();
-    const wasmOut = processImageWasm(originalWidth, originalHeight, inputPixels);
-    const t1Wasm = performance.now();
-    const wasmMs = t1Wasm - t0Wasm;
-    wasmTime = wasmMs.toFixed(2);
-    drawToCanvas(outputWasmCanvas, wasmOut);
+    try {
+      const t0Wasm = performance.now();
+      const wasmOut = processImageWasm(originalWidth, originalHeight, inputPixels);
+      const t1Wasm = performance.now();
+      const wasmMs = t1Wasm - t0Wasm;
+      wasmTime = wasmMs.toFixed(2);
+      drawToCanvas(outputWasmCanvas, wasmOut);
 
-    // JS
-    const t0Js = performance.now();
-    const jsOut = processImageJs(originalWidth, originalHeight, inputPixels);
-    const t1Js = performance.now();
-    const jsMs = t1Js - t0Js;
-    jsTime = jsMs.toFixed(2);
-    drawToCanvas(outputJsCanvas, jsOut);
+      const t0Js = performance.now();
+      const jsOut = processImageJs(originalWidth, originalHeight, inputPixels);
+      const t1Js = performance.now();
+      const jsMs = t1Js - t0Js;
+      jsTime = jsMs.toFixed(2);
+      drawToCanvas(outputJsCanvas, jsOut);
 
-    // Speed ratio (JS / WASM)
-    if (jsMs > 0 && wasmMs > 0) {
-      const ratio = jsMs / wasmMs;
-
-      if (ratio > 1) {
-        speedup = `${ratio.toFixed(1)}× slower than WASM`;
-      } else {
-        speedup = `${(1 / ratio).toFixed(1)}× faster than JS`;
+      if (jsMs > 0 && wasmMs > 0) {
+        const ratio = jsMs / wasmMs;
+        if (ratio > 1) {
+          speedup = `${ratio.toFixed(1)}× slower than WASM`;
+        } else {
+          speedup = `${(1 / ratio).toFixed(1)}× faster than JS`;
+        }
       }
+    } finally {
+      running = false;
     }
-
-    running = false;
   }
 </script>
 
@@ -166,7 +166,6 @@
     {/if}
   </div>
 
-  <!-- Inputs -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
       <label class="block text-xs font-medium mb-1">Use sample image</label>
@@ -193,7 +192,6 @@
     </div>
   </div>
 
-  <!-- Canvases -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
     <div class="panel">
       <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Input</div>
@@ -209,7 +207,6 @@
     </div>
   </div>
 
-  <!-- Run both -->
   <button
     class="w-full py-2.5 rounded-md bg-indigo-500 hover:bg-indigo-400 text-sm font-semibold transition disabled:opacity-50"
     on:click={runBoth}
@@ -224,7 +221,6 @@
     {/if}
   </button>
 
-  <!-- Times + speed ratio -->
   <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
     <div class="p-3 rounded-lg bg-slate-800 border border-slate-700">
       <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">JS runtime</div>

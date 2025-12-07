@@ -161,7 +161,6 @@ function waveJs(
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const offsetFloat = amplitude * Math.sin(y * frequency);
-      // trunc jak rzutowanie f32 -> isize w Rust
       const offset =
         offsetFloat < 0 ? Math.ceil(offsetFloat) : Math.floor(offsetFloat);
 
@@ -195,7 +194,6 @@ function sobelEdgesJs(
       for (let ky = -1; ky <= 1; ky++) {
         for (let kx = -1; kx <= 1; kx++) {
           const [r, g, b] = getPixelJs(src, w, h, x + kx, y + ky);
-          // jak w Rust: f32 -> i32 (trunc)
           const lum = (0.299 * r + 0.587 * g + 0.114 * b) | 0;
 
           sx += gx[k] * lum;
