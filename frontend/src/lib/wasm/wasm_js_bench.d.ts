@@ -7,15 +7,12 @@ export function matmul_sum(n: number): number;
 
 export function process_image_wasm(width: number, height: number, data: Uint8ClampedArray): Uint8ClampedArray;
 
-export function simulate_particles(steps: number, dt: number, width: number, height: number, positions: Float32Array, velocities: Float32Array): Float32Array;
-
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly factorial_mod: (a: number) => number;
   readonly matmul_sum: (a: number) => number;
-  readonly simulate_particles: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
   readonly process_image_wasm: (a: number, b: number, c: number, d: number) => [number, number];
   readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
