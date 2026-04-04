@@ -6,45 +6,52 @@
   type TabId = 'js-strong' | 'wasm-strong' | 'image';
 
   const tabs: { id: TabId; label: string; subtitle: string }[] = [
-    { id: 'js-strong', label: 'JS is already fast', subtitle: 'A case where JS wins or ties' },
-    { id: 'wasm-strong', label: 'WASM shines', subtitle: 'A case where Rust clearly wins' },
-    { id: 'image', label: 'Real-world demo', subtitle: 'Image processing with WASM' }
+    { id: 'js-strong', label: 'JS is already fast', subtitle: 'JS wins or ties' },
+    { id: 'wasm-strong', label: 'WASM shines', subtitle: 'Rust clearly wins' },
+    { id: 'image', label: 'Real-world demo', subtitle: 'Image processing' }
   ];
 
   let activeTab: TabId = 'js-strong';
 </script>
 
-<main class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-  <div class="max-w-5xl w-full mx-4 p-6 rounded-2xl bg-slate-900 shadow-xl border border-slate-800">
-    <h1 class="text-2xl font-semibold mb-2 text-center">
-      Rust + WebAssembly vs JavaScript
-    </h1>
-    <p class="text-sm text-slate-300 mb-6 text-center">
-      Three small benchmarks to show where JavaScript is already great, where WASM shines, 
-      and how this looks in a real-world UI.
-    </p>
+<main class="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100 p-4">
+  <div class="flex-1 flex flex-col min-h-0 max-w-5xl w-full mx-auto rounded-3xl bg-slate-900 shadow-2xl border border-slate-800 overflow-hidden">
 
-    <div class="flex gap-2 mb-6 overflow-x-auto">
-      {#each tabs as tab}
-        <button
-          class={`px-3 py-2 rounded-xl text-sm border transition 
-            ${activeTab === tab.id 
-              ? 'bg-indigo-500 border-indigo-400 text-white' 
-              : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'}`}
-          on:click={() => (activeTab = tab.id)}
-        >
-          <div class="font-medium">{tab.label}</div>
-          <div class="text-[11px] text-slate-300/80">{tab.subtitle}</div>
-        </button>
-      {/each}
+    <!-- Compact header -->
+    <div class="px-8 pt-5 pb-4 border-b border-slate-800 shrink-0">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-3xl font-black tracking-tight">Rust + WebAssembly vs JavaScript</h1>
+        <p class="text-sm text-slate-400 text-right max-w-xs leading-snug">
+          Where JS holds its own, where WASM dominates, and a real-world UI demo.
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        {#each tabs as tab}
+          <button
+            class={`flex-1 px-5 py-3 rounded-2xl border-2 transition-all
+              ${activeTab === tab.id
+                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
+                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-500'}`}
+            on:click={() => (activeTab = tab.id)}
+          >
+            <div class="font-bold text-base">{tab.label}</div>
+            <div class="text-xs text-slate-300/70 mt-0.5">{tab.subtitle}</div>
+          </button>
+        {/each}
+      </div>
     </div>
 
-    {#if activeTab === 'js-strong'}
-      <DemoMatrixTab />
-    {:else if activeTab === 'wasm-strong'}
-      <DemoFactorialTab />
-    {:else}
-      <DemoImageTab />
-    {/if}
+    <!-- Scrollable content area -->
+    <div class="flex-1 min-h-0 overflow-y-auto px-8 py-6">
+      {#if activeTab === 'js-strong'}
+        <DemoMatrixTab />
+      {:else if activeTab === 'wasm-strong'}
+        <DemoFactorialTab />
+      {:else}
+        <DemoImageTab />
+      {/if}
+    </div>
+
   </div>
 </main>

@@ -11,7 +11,8 @@
 
   let jsTime: string | null = null;
   let wasmTime: string | null = null;
-  let speedup: string | null = null;
+  let winner: 'js' | 'wasm' | 'tie' | null = null;
+  let winnerMultiplier: string | null = null;
 
   let jsResult: number | null = null;
   let wasmResult: number | null = null;
@@ -39,7 +40,8 @@
 
     jsTime = null;
     wasmTime = null;
-    speedup = null;
+    winner = null;
+    winnerMultiplier = null;
     jsResult = null;
     wasmResult = null;
 
@@ -56,7 +58,18 @@
       const wasm = bench(matmulSumWasm as (n: number) => number, numericN, numericRuns);
       wasmTime = wasm.ms.toFixed(2);
       wasmResult = wasm.result;
-      speedup = (js.ms / wasm.ms).toFixed(1);
+
+      const ratio = js.ms / wasm.ms;
+      if (ratio < 0.95) {
+        winner = 'js';
+        winnerMultiplier = (1 / ratio).toFixed(1);
+      } else if (ratio > 1.05) {
+        winner = 'wasm';
+        winnerMultiplier = ratio.toFixed(1);
+      } else {
+        winner = 'tie';
+        winnerMultiplier = ratio.toFixed(2);
+      }
     }
 
     isRunning = false;
@@ -64,21 +77,17 @@
 </script>
 
 <div class="space-y-4">
-  <h2 class="text-lg font-semibold">
-    Tab 1 – when JavaScript is already great
-  </h2>
-
   <p class="text-sm text-slate-300">
-    We simulate an <code class="px-1 rounded bg-slate-800">n × n</code> matrix multiplication and return
-    a single number (mod 1&nbsp;000&nbsp;000&nbsp;007). Both JavaScript and Rust (WASM) run the same algorithm.
-    In this case, the JavaScript JIT is often just as fast – or even faster – than WASM.
+    An <code class="px-1 rounded bg-slate-800 text-indigo-300">n × n</code> matrix multiply returning a single number (mod 1&nbsp;000&nbsp;000&nbsp;007).
+    Both sides run the same O(n³) algorithm — this is where the JavaScript JIT often keeps pace with WASM.
   </p>
 
-  <div class="grid grid-cols-2 gap-4 mb-2">
+  <div class="grid grid-cols-2 gap-4">
     <div>
-      <label class="block text-xs font-medium mb-1">n (matrix size, n × n)</label>
+      <label for="matrix-n" class="block text-xs font-semibold mb-1.5 text-slate-300 uppercase tracking-wide">n (matrix size, n × n)</label>
       <input
-        class="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        id="matrix-n"
+        class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         type="number"
         bind:value={n}
         min="50"
@@ -86,15 +95,14 @@
         step="10"
         disabled={isRunning}
       />
-      <p class="mt-1 text-[11px] text-slate-500">
-        Complexity is O(n³). Bigger n = heavier work.
-      </p>
+      <p class="mt-1 text-xs text-slate-500">Complexity O(n³). Bigger n = heavier work.</p>
     </div>
 
     <div>
-      <label class="block text-xs font-medium mb-1">Runs (averaging)</label>
+      <label for="matrix-runs" class="block text-xs font-semibold mb-1.5 text-slate-300 uppercase tracking-wide">Runs (averaging)</label>
       <input
-        class="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        id="matrix-runs"
+        class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         type="number"
         bind:value={runs}
         min="1"
@@ -105,53 +113,61 @@
   </div>
 
   <button
-    class="w-full py-2.5 rounded-md bg-indigo-500 hover:bg-indigo-400 text-sm font-semibold transition disabled:opacity-50"
+    class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-lg font-bold transition disabled:opacity-50 shadow-lg"
     on:click={runBenchmark}
     disabled={!wasmReady || isRunning}
   >
-    {#if !wasmReady}
-      Loading WASM…
-    {:else if isRunning}
-      Running benchmark…
-    {:else}
-      Run matrix benchmark
-    {/if}
+    {#if !wasmReady}Loading WASM…{:else if isRunning}Running benchmark…{:else}Run matrix benchmark{/if}
   </button>
 
-  <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-    <div class="p-3 rounded-lg bg-slate-800 border border-slate-700">
-      <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">JavaScript</div>
-      <div class="text-lg font-mono">
-        {#if jsTime !== null}{jsTime} ms{:else}–{/if}
+  <div class="grid grid-cols-2 gap-4">
+    <div class={`p-5 rounded-2xl border-2 relative transition-all ${
+      winner === 'js' ? 'bg-emerald-950 border-emerald-400 shadow-lg shadow-emerald-900/30'
+      : winner === 'tie' ? 'bg-amber-950/40 border-amber-500'
+      : 'bg-slate-800 border-slate-700'
+    }`}>
+      {#if winner === 'js'}
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-400 text-slate-900 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-widest">WINNER</div>
+      {/if}
+      <div class="text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">JavaScript</div>
+      <div class="text-5xl font-black font-mono">
+        {#if jsTime !== null}{jsTime}<span class="text-xl font-normal text-slate-400 ml-1">ms</span>{:else}–{/if}
       </div>
+      {#if jsResult !== null}
+        <div class="mt-2 text-xs text-slate-500 font-mono">result: {jsResult}</div>
+      {/if}
     </div>
 
-    <div class="p-3 rounded-lg bg-slate-800 border border-slate-700">
-      <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Rust (WASM)</div>
-      <div class="text-lg font-mono">
-        {#if wasmTime !== null}{wasmTime} ms{:else}–{/if}
+    <div class={`p-5 rounded-2xl border-2 relative transition-all ${
+      winner === 'wasm' ? 'bg-emerald-950 border-emerald-400 shadow-lg shadow-emerald-900/30'
+      : winner === 'tie' ? 'bg-amber-950/40 border-amber-500'
+      : 'bg-slate-800 border-slate-700'
+    }`}>
+      {#if winner === 'wasm'}
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-400 text-slate-900 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-widest">WINNER</div>
+      {/if}
+      <div class="text-xs uppercase tracking-widest text-slate-400 mb-2 font-semibold">Rust (WASM)</div>
+      <div class="text-5xl font-black font-mono">
+        {#if wasmTime !== null}{wasmTime}<span class="text-xl font-normal text-slate-400 ml-1">ms</span>{:else}–{/if}
       </div>
+      {#if wasmResult !== null}
+        <div class="mt-2 text-xs text-slate-500 font-mono">result: {wasmResult}</div>
+      {/if}
     </div>
   </div>
 
-  <div class="mt-4 grid grid-cols-1 gap-2 text-xs text-slate-400">
-    {#if jsResult !== null}
-      <div>
-        JS result: <span class="font-mono text-slate-100">{jsResult}</span>
-      </div>
-    {/if}
-
-    {#if wasmResult !== null}
-      <div>
-        WASM result: <span class="font-mono text-slate-100">{wasmResult}</span>
-      </div>
-    {/if}
-  </div>
-
-  {#if speedup}
-    <div class="mt-3 text-xs text-emerald-400">
-      Speed ratio (JS / WASM): <span class="font-semibold">{speedup}×</span>
-      <span class="text-slate-400"> (values &lt; 1.0 mean WASM is faster, &gt; 1.0 mean JS is faster)</span>
+  {#if winner !== null}
+    <div class={`py-4 px-6 rounded-2xl text-center border-2 flex items-center justify-center gap-6 ${
+      winner === 'tie' ? 'bg-amber-950/30 border-amber-500'
+      : 'bg-emerald-950/50 border-emerald-500'
+    }`}>
+      {#if winner === 'tie'}
+        <div class="text-3xl font-black text-amber-300">Essentially tied!</div>
+        <div class="text-slate-400 text-base">ratio: {winnerMultiplier}× — within noise</div>
+      {:else}
+        <div class={`text-6xl font-black font-mono ${winner === 'js' ? 'text-blue-300' : 'text-emerald-300'}`}>{winnerMultiplier}×</div>
+        <div class="text-xl font-bold text-slate-200">{winner === 'js' ? 'JavaScript' : 'Rust (WASM)'} is faster</div>
+      {/if}
     </div>
   {/if}
 </div>
